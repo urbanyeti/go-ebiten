@@ -13,23 +13,35 @@ import (
 )
 
 const (
-	SCREENWIDTH  = 1280
-	SCREENHEIGHT = 720
+	SCREENWIDTH  = 1000
+	SCREENHEIGHT = 740
 	WALKPATH     = `Knight_02\02-Walk\`
 )
 
 var (
 	images []*ebiten.Image
+	bg     *ebiten.Image
 )
 
 func init() {
+
+	f, err := os.Open("hivecity-slum-door.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	img, _, err := image.Decode(f)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ebitenImage, err := ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+	bg = ebitenImage
+
 	files, err := ioutil.ReadDir(WALKPATH)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, file := range files {
-		fmt.Println(file)
 		f, err := os.Open(fmt.Sprint(WALKPATH, file.Name()))
 		if err != nil {
 			log.Fatal(err)
@@ -38,11 +50,11 @@ func init() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		image, err := ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+		ebitenImage, err := ebiten.NewImageFromImage(img, ebiten.FilterDefault)
 		if err != nil {
 			log.Fatal(err)
 		}
-		images = append(images, image)
+		images = append(images, ebitenImage)
 	}
 }
 
@@ -114,7 +126,7 @@ func (g *Game) init() {
 	}
 }
 
-func (g *Game) Update(img *ebiten.Image) error {
+func (g *Game) Update(screen *ebiten.Image) error {
 	if !g.inited {
 		g.init()
 	}
@@ -123,6 +135,8 @@ func (g *Game) Update(img *ebiten.Image) error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	g.op.GeoM.Reset()
+	screen.DrawImage(bg, &g.op)
 	g.op.GeoM.Reset()
 	if g.sprite.flipped {
 		g.op.GeoM.Scale(-.25, .25)
