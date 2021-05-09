@@ -88,7 +88,7 @@ func (s *Sprite) Update() {
 		s.vx = 0
 		s.vy = 3
 	}
-	if s.y < 0 {
+	if s.y < (SCREENHEIGHT / 2) {
 		s.y -= s.vy
 		s.vy = 0
 		s.vx = 3
@@ -113,7 +113,7 @@ func (g *Game) init() {
 	}()
 
 	w, h := images[0].Size()
-	x, y := rand.Intn(SCREENWIDTH-w), rand.Intn(SCREENHEIGHT-h)
+	x, y := rand.Intn(SCREENWIDTH-w), rand.Intn(SCREENHEIGHT-h)+(SCREENHEIGHT/2)
 	vx, vy := 3, 0
 	g.sprite = &Sprite{
 		imageWidth:  w / 4,
