@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -14,27 +15,35 @@ import (
 const (
 	SCREENWIDTH  = 1280
 	SCREENHEIGHT = 720
+	WALKPATH     = `Knight_02\02-Walk\`
 )
 
 var (
-	ebitenImage *ebiten.Image
+	images []*ebiten.Image
 )
 
 func init() {
-	f, err := os.Open("robot.png")
-	if err != nil {
-		log.Fatal((err))
-	}
-
-	img, _, err := image.Decode(f)
+	files, err := ioutil.ReadDir(WALKPATH)
 	if err != nil {
 		log.Fatal(err)
 	}
-	oldebitenImage, err := ebiten.NewImageFromImage(img, ebiten.FilterDefault)
-	if err != nil {
-		log.Fatal((err))
+
+	for _, file := range files {
+		fmt.Println(file)
+		f, err := os.Open(fmt.Sprint(WALKPATH, file.Name()))
+		if err != nil {
+			log.Fatal(err)
+		}
+		img, _, err := image.Decode(f)
+		if err != nil {
+			log.Fatal(err)
+		}
+		image, err := ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+		if err != nil {
+			log.Fatal(err)
+		}
+		images = append(images, image)
 	}
-	ebitenImage = oldebitenImage
 }
 
 type Sprite struct {
@@ -44,10 +53,18 @@ type Sprite struct {
 	y           int
 	vx          int
 	vy          int
-	angle       int
+	frame       int
+	frameCount  int
+	hold        int
+	flipped     bool
 }
 
 func (s *Sprite) Update() {
+	s.hold = (s.hold + 1) % 3
+	if s.hold == 0 {
+		s.frame = (s.frame + 1) % s.frameCount
+	}
+
 	s.x += s.vx
 	s.y += s.vy
 	if s.x < 0 {
@@ -63,10 +80,12 @@ func (s *Sprite) Update() {
 		s.y -= s.vy
 		s.vy = 0
 		s.vx = 3
+		s.flipped = !s.flipped
 	} else if my := SCREENHEIGHT - s.imageHeight; my <= s.y {
 		s.y -= s.vy
 		s.vy = 0
 		s.vx = -3
+		s.flipped = !s.flipped
 	}
 }
 
@@ -81,17 +100,17 @@ func (g *Game) init() {
 		g.inited = true
 	}()
 
-	w, h := ebitenImage.Size()
+	w, h := images[0].Size()
 	x, y := rand.Intn(SCREENWIDTH-w), rand.Intn(SCREENHEIGHT-h)
-	vx, vy := 2, 0
+	vx, vy := 3, 0
 	g.sprite = &Sprite{
-		imageWidth:  w,
-		imageHeight: h,
+		imageWidth:  w / 4,
+		imageHeight: h / 4,
 		x:           x,
 		y:           y,
 		vx:          vx,
 		vy:          vy,
-		angle:       0,
+		frameCount:  8,
 	}
 }
 
@@ -105,9 +124,15 @@ func (g *Game) Update(img *ebiten.Image) error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.op.GeoM.Reset()
-	g.op.GeoM.Scale(1, 1)
+	if g.sprite.flipped {
+		g.op.GeoM.Scale(-.25, .25)
+		g.op.GeoM.Translate(float64(g.sprite.imageWidth), 0)
+	} else {
+		g.op.GeoM.Scale(.25, .25)
+	}
+
 	g.op.GeoM.Translate(float64(g.sprite.x), float64(g.sprite.y))
-	screen.DrawImage(ebitenImage, &g.op)
+	screen.DrawImage(images[g.sprite.frame], &g.op)
 	msg := fmt.Sprintf(`TPS: %0.2f
 FPS: %0.2f
 X: %v Y: %v`, ebiten.CurrentTPS(), ebiten.CurrentFPS(), g.sprite.x, g.sprite.y)

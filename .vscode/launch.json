@@ -12,11 +12,18 @@
             "program": "${workspaceFolder}/src/cmd/game/game.go"
         },
         {
-            "name": "Launch Demo",
+            "name": "Sprite Demo",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/src/cmd/sprites-demo/sprites.go"
+        },
+        {
+            "name": "Animation Demo",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/src/cmd/animation-demo/animation.go"
         }
 
     ]
